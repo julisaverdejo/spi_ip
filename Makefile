@@ -1,14 +1,12 @@
 ##=============================================================================
 ## [Filename]       Makefile.vcs
-## [Project]        gpio_uvc
-## [Author]         Ciro Bermudez - cirofabian.bermudezmarquez@ba.infn.it
+## [Project]        spi_ip
+## [Author]         Julisa Verdejo - julisa.verdejopalacios@ba.infn.it
 ## [Language]       GNU Makefile
 ## [Created]        Nov 2024
 ## [Modified]       -
-## [Description]    gpio_uvc Makefile for testing the uvc
+## [Description]    
 ## [Notes]          Command-line usage:
-##                    make help
-## 			       		    
 ## [Status]         stable
 ## [Revisions]      -
 ##=============================================================================
@@ -20,42 +18,34 @@ CUR_DATE   := $(shell date +%Y-%m-%d_%H-%M-%S)
 
 # Directories
 GIT_DIR     := $(shell git rev-parse --show-toplevel)
-ROOT_DIR    := $(CURDIR)
+ROOT_DIR    := $(GIT_DIR)
 RUN_DIR     := $(ROOT_DIR)/work
 SCRIPTS_DIR := $(ROOT_DIR)/scripts
 
-# UVM configurations
-TEST ?= top_test
-VERBOSITY ?= UVM_MEDIUM
+# Configurations
 SEED ?= 1
-VCS_DEFINES ?= +define+GIT_DIR=\"$(ROOT_DIR)\"
+VCS_DEFINES ?= 
 SIMV_ARGS ?=
 
-# Files
-RTL_FILES = $(ROOT_DIR)/rtl/adder.sv
+# Files Simulation Verification Environment
 SVE = -F $(ROOT_DIR)/sve.f
 
-# UVCs
-UVCS = -F $(ROOT_DIR)/gpio_uvc.f
-
 # Synopsys VCS/SIMV options
-FILES = $(UVCS) $(RTL_FILES) $(SVE) 
+FILES = $(SVE) 
 
-VCS_FLAGS = -full64 -sverilog -ntb_opts uvm-1.2 \
-						-lca -debug_access+all+reverse -kdb +vcs+vcdpluson \
-						-timescale=1ps/100fs $(FILES) -l comp.log \
-						-j4 \
-						$(VCS_DEFINES) \
-						$(ROOT_DIR)/dpi/external.o
+VCS_FLAGS = -full64 -sverilog \
+			-lca -debug_access+all -kdb +vcs+vcdpluson \
+			-timescale=1ns/100ps $(FILES) -l comp.log \
+			-j8 \
+			$(VCS_DEFINES) \
 
-SIMV_FLAGS = +UVM_TESTNAME=$(TEST) +UVM_VERBOSITY=$(VERBOSITY) -l simv.log \
-						 +UVM_TR_RECORD +UVM_LOG_RECORD +UVM_NO_RELNOTES \
-						 $(SIMV_ARGS) \
-						 -ucli -do $(ROOT_DIR)/run.tcl
+SIMV_FLAGS =  -l simv.log \
+				$(SIMV_ARGS) \
+				-ucli -do $(ROOT_DIR)/run.tcl
 
 # Verdi options (see work/sim/verdi.cmd)
 VERDI_FLAGS = -dbdir ./simv.daidir -ssf ./novas.fsdb -nologo -q
-VERDI_DIR   = $(SCRIPTS_DIR)/verdi_waveforms
+VERDI_DIR   = $(SCRIPTS_DIR)/waveforms
 VERDI_FILE  = verdi.tcl
 VERDI_PLAY  = -play $(VERDI_DIR)/$(VERDI_FILE)
 
@@ -110,9 +100,7 @@ vars: ## Print Makefile variables
 	@echo "SCRIPTS_DIR = $(SCRIPTS_DIR)"
 	@echo "VERDI_DIR   = $(VERDI_DIR)"
 	@echo ""
-	@echo -e "$(C_ORA)UVM variables...$(NC)"
-	@echo "TEST        = $(TEST)"
-	@echo "VERBOSITY   = $(VERBOSITY)"
+	@echo -e "$(C_ORA)Variables...$(NC)"
 	@echo "SEED        = $(SEED)"
 	@echo "VCS_DEFINES = $(VCS_DEFINES)"
 	@echo "SIMV_ARGS   = $(SIMV_ARGS)"
@@ -120,8 +108,8 @@ vars: ## Print Makefile variables
 #______________________________________________________________________________
 
 .PHONY: compile
-compile: compile-dpi ## Runs VCS compilation
-	@echo -e "$(C_ORA)Compiling UVM project$(NC)"
+compile: ## Runs VCS compilation
+	@echo -e "$(C_ORA)Compiling project$(NC)"
 	@mkdir -p $(RUN_DIR)/sim 
 	cd $(RUN_DIR)/sim && vcs $(VCS_FLAGS)
 #______________________________________________________________________________
@@ -150,18 +138,6 @@ verdi-play: ## Opens Verdi GUI running verdi.tcl file
 	cd $(RUN_DIR)/sim && verdi $(VERDI_FLAGS) $(VERDI_PLAY) &
 #______________________________________________________________________________
 
-.PHONY: coverage
-coverage: ## Create coverage report
-	@echo -e "$(C_ORA)Creating coverage report$(NC)"
-	cd $(RUN_DIR)/sim && urg -dir simv.vdb && urg -dir simv.vdb -format text
-#______________________________________________________________________________
-
-.PHONY: compile-dpi
-compile-dpi: ## Run dpi (C/C++) compilation
-	@echo -e "$(C_ORA)Compiling dpi (C/C++) code$(NC)"
-	g++ -c dpi/external.cpp -o dpi/external.o
-#______________________________________________________________________________
-
 .PHONY: clean
 clean: ## Remove all simulation files
 	@echo -e "$(C_ORA)Removing all simulation files$(NC)"
@@ -179,15 +155,11 @@ help: ## Display help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "- make \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "--------------------------- Variables -------------------------------"
-	@echo "  TEST                : Name of UVM_TEST"
-	@echo "  VERBOSITY           : UVM_VERBOSITY of the simulation"
 	@echo "  SEED                : Random seed used, must be an integer > 0"
 	@echo "  VCS_DEFINES         : Add defines to vcs command"
 	@echo "  SIMV_ARG            : Add plusargs to simv command"
 	@echo ""
 	@echo "---------------------------- Defaults --------------------------------"
-	@echo "  TEST                : $(TEST)"
-	@echo "  VERBOSITY           : $(VERBOSITY)"
 	@echo "  SEED                : $(SEED)"
 	@echo "  VCS_DEFINES         : $(VCS_DEFINES)"
 	@echo "  SIMV_ARGS           : $(SIMV_ARGS)"
