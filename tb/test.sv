@@ -82,5 +82,6 @@ module test (
   repeat (200) @(vif.cb);   
   endtask : read
 
+/* ################## CHECK ################## */
   
 endmodule : test
