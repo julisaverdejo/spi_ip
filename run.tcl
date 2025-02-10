@@ -13,6 +13,6 @@
 ##=============================================================================
 
 dump -file novas.fsdb -type FSDB
-dump -add tb.* -depth 2 -fid FSDB0
+dump -add tb.* -depth 4 -fid FSDB0
 run
 quit
