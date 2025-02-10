@@ -6,12 +6,12 @@ module test (
     $display("Begin Of Simulation.");
     
     reset();
-    normal();
+    write();
     fork
       begin
       vif.cb.start_i <= 'b1;
-      //vif.cb.din_i <= 'h00;
-      vif.cb.din_i <= $urandom_range(0,255);
+      vif.cb.din_i <= 'h00;
+      //vif.cb.din_i <= $urandom_range(0,255);
       @(vif.cb);
       vif.cb.start_i <= 'b0; 
       end
@@ -40,21 +40,21 @@ module test (
   endtask : reset 
   
   
-  task automatic normal();
+  task automatic write();
   @(vif.cb);
-  //vif.cb.din_i <= 'hAA;
-  vif.cb.din_i <= $urandom_range(0,255);
+  vif.cb.din_i <= 'hAA;
+  //vif.cb.din_i <= $urandom_range(0,255);
   vif.cb.start_i <= 'b1;
   @(vif.cb);
   vif.cb.start_i <= 'b0;
   
-  // detector de flancos
+  // waits for rising edge flag
   wait (vif.cb.spi_done_tick_o != 1);
   @(vif.cb iff (vif.cb.spi_done_tick_o == 1));
   
   repeat (200) @(vif.cb); 
   
-  endtask : normal
+  endtask : write
   
   
   task automatic read();
@@ -81,4 +81,6 @@ module test (
   vif.miso_i = 'b0;    
   repeat (200) @(vif.cb);   
   endtask : read
+
+  
 endmodule : test
