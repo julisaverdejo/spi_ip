@@ -3,10 +3,16 @@ module test (
 );
 
   initial begin
-    $display("Begin Of Simulation.");
-    
+    $display("Begin Of Simulation.");  
     reset();
     write();
+
+    fork
+      write();  
+      check_write();   
+    join   
+
+
     fork
       begin
       vif.cb.start_i <= 'b1;
@@ -83,5 +89,30 @@ module test (
   endtask : read
 
 /* ################## CHECK ################## */
+  task automatic check_write();
+  int cnt_error = 0;
+  byte mosi_data = 0;
+  byte data_in = 0;
+
+  wait (vif.start_i != 1);
+  @(vif.cb iff (vif.start_i == 1));
+  data_in = vif.din_i;
+
+  for (int i = 0; i < $size(data_in); i++) begin
+    wait (vif.cb.sclk_o != 1);
+    @(vif.cb iff (vif.cb.sclk_o == 1));
+    mosi_data[7-i] = vif.mosi_o;
+    if (data_in[7-i] != vif.mosi_o) begin
+      cnt_error++;
+    end
+  end
+  $display("There are: %2d errors", cnt_error);
+  if (data_in == mosi_data) begin
+    $display("The sent data has no errors: %h", mosi_data);
+  end else begin
+    $display("The sent data has errors: din_i = %h, mosi_data = %h", data_in, mosi_data); 
+  end
+
+  endtask : check_write
   
 endmodule : test
