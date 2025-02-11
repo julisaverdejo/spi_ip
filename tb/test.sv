@@ -8,28 +8,42 @@ module test (
     $display("Begin Of Simulation.");  
     reset();
 
-    fork
-      begin
-        repeat(reps) write();
-      end
+    // fork
+    //   begin
+    //     repeat(reps) write();
+    //   end
 
-      begin
-        repeat(reps) check_write();   
-      end
+    //   begin
+    //     repeat(reps) check();   
+    //   end
             
-    join   
+    // join   
 
+    // fork
+    //   begin
+    //     repeat(reps) read();
+    //   end
+      
+    //   begin
+    //     repeat(reps) spi_slave();
+    //   end
+        
+    // join
     fork
       begin
-        repeat(reps) read();
+        repeat(10) write();
+        repeat(10) read();
+        $finish;
       end
-      
+
       begin
-        repeat(reps) spi_slave();
+        forever check();
       end
-        
+
+      begin
+        forever spi_slave();
+      end
     join
-    
     $display("End Of Simulation.");
     $finish;
   end
@@ -49,24 +63,22 @@ module test (
   
   
   task automatic write();
-  @(vif.cb);
-  //vif.cb.din_i <= 'hAA;
-  vif.cb.din_i <= $urandom_range(0,255);
-  vif.cb.start_i <= 'b1;
-  @(vif.cb);
-  vif.cb.start_i <= 'b0;
-  
-  // waits for rising edge flag
-  wait (vif.cb.spi_done_tick_o != 1);
-  @(vif.cb iff (vif.cb.spi_done_tick_o == 1));
-  
-  repeat (1000) @(vif.cb); 
-  
+    @(vif.cb);
+    vif.cb.din_i <= $urandom_range(0,255);
+    vif.cb.start_i <= 'b1;
+    @(vif.cb);
+    vif.cb.start_i <= 'b0;
+    
+    // waits for rising edge flag
+    wait (vif.cb.spi_done_tick_o != 1);
+    @(vif.cb iff (vif.cb.spi_done_tick_o == 1));
+    
+    repeat (1000) @(vif.cb); 
   endtask : write
 
 
 task automatic read();
-  byte data_check = 'd0;
+  // byte data_check = 'd0;
 
   @(vif.cb);
   vif.cb.din_i <= 'h0;
@@ -74,21 +86,21 @@ task automatic read();
   @(vif.cb);
   vif.cb.start_i <= 'b0;
 
-  for (int i = 0; i < $size(data_check); i++) begin
-    wait (vif.cb.sclk_o != 1);
-    @(vif.cb iff (vif.cb.sclk_o == 1));
-    data_check[7-i] = vif.miso_i;
-  end
+  // for (int i = 0; i < $size(data_check); i++) begin
+  //   wait (vif.cb.sclk_o != 1);
+  //   @(vif.cb iff (vif.cb.sclk_o == 1));
+  //   data_check[7-i] = vif.miso_i;
+  // end
   
   // waits for rising edge flag
   wait (vif.cb.spi_done_tick_o != 1);
   @(vif.cb iff (vif.cb.spi_done_tick_o == 1));
 
-   if (data_check == vif.dout_o) begin
-    $display("The received data has no errors: %h", vif.dout_o);
-  end else begin
-    $display("The received data has errors: dout_o = %h, data_check = %h", vif.dout_o, data_check); 
-  end
+  //  if (data_check == vif.dout_o) begin
+  //   $display("The received data has no errors: %h", vif.dout_o);
+  // end else begin
+  //   $display("The received data has errors: dout_o = %h, data_check = %h", vif.dout_o, data_check); 
+  // end
   
   repeat (1000) @(vif.cb); 
 endtask : read
@@ -109,7 +121,7 @@ endtask : read
     @(vif.cb iff (vif.cb.sclk_o == 0));
     vif.miso_i = data[i];       
   end
-    
+
   wait (vif.cb.spi_done_tick_o != 1);
   @(vif.cb iff (vif.cb.spi_done_tick_o == 1));
   vif.miso_i = 'b0;    
@@ -117,12 +129,13 @@ endtask : read
   endtask : spi_slave
 
 /* ################## CHECK ################## */
-  task automatic check_write();
+  task automatic check();
   int cnt_error = 0;
   byte mosi_data = 0;
+  byte miso_data = 0;
   byte data_in = 0;
+  byte data_out = 0;
 
-  // 
   wait (vif.start_i != 1);
   @(vif.cb iff (vif.start_i == 1));
   data_in = vif.din_i;
@@ -131,17 +144,35 @@ endtask : read
     wait (vif.cb.sclk_o != 1);
     @(vif.cb iff (vif.cb.sclk_o == 1));
     mosi_data[7-i] = vif.mosi_o;
-    if (data_in[7-i] != vif.mosi_o) begin
-      cnt_error++;
-    end
-  end
-  $display("There are: %2d errors", cnt_error);
-  if (data_in == mosi_data) begin
-    $display("The sent data has no errors: %h", mosi_data);
-  end else begin
-    $display("The sent data has errors: din_i = %h, mosi_data = %h", data_in, mosi_data); 
+    miso_data[7-i] = vif.miso_i;
+    // if (data_in[7-i] != vif.mosi_o) begin
+    //   cnt_error++;
+    // end
   end
 
-  endtask : check_write
+  wait (vif.cb.spi_done_tick_o != 1);
+  @(vif.cb iff (vif.cb.spi_done_tick_o == 1));
+  data_out = vif.dout_o;
+
+  if (data_in == mosi_data) begin
+    $display("[INFO]: mosi was sent correctly: %h", mosi_data);
+  end else begin
+    $display("[ERROR]: mosi = %h, data_in = %h", mosi_data, data_in);
+  end
+
+  if (data_out == miso_data) begin
+    $display("[INFO]: miso was received correctly: %h", miso_data);
+  end else begin
+    $display("[ERROR]: miso = %h, data_out = %h", miso_data, data_out);
+  end
+
+  // $display("There are: %2d errors", cnt_error);
+  // if (data_in == mosi_data) begin
+  //   $display("The sent data has no errors: %h", mosi_data);
+  // end else begin
+  //   $display("The sent data has errors: din_i = %h, mosi_data = %h", data_in, mosi_data); 
+  // end
+
+  endtask : check
   
 endmodule : test
