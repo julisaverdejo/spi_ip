@@ -56,8 +56,8 @@ module test (
     vif.cpol_i = 'b0;  
     vif.cpha_i = 'b0;
     vif.miso_i = 'b0; 
-    repeat (5) @(vif.cb); //line 35 and 36 occur simultaneously
-    vif.cb.rst_i <= 'b0;  
+    repeat (5) @(vif.cb); // This line and the next one
+    vif.cb.rst_i <= 'b0;  // occur simultaneosly
     repeat (5) @(vif.cb);       
   endtask : reset 
   
@@ -131,10 +131,10 @@ endtask : read
 /* ################## CHECK ################## */
   task automatic check();
   int cnt_error = 0;
-  byte mosi_data = 0;
-  byte miso_data = 0;
-  byte data_in = 0;
-  byte data_out = 0;
+  byte mosi_data = 0; //vif.mosi_o copy
+  byte miso_data = 0; //vif.miso_i copy
+  byte data_in = 0; //vif.din_i copy
+  byte data_out = 0; //vif.dout_o copy
 
   wait (vif.start_i != 1);
   @(vif.cb iff (vif.start_i == 1));
