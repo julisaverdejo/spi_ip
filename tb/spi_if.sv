@@ -1,14 +1,16 @@
-interface spi_if (
+interface spi_if #(
+  parameter int WordLength = 8
+) (
   input logic clk_i
  ); 
  
   logic         rst_i;
-  logic [7:0]   din_i;
+  logic [WordLength-1:0]   din_i;
   logic  [15:0] dvsr_i;
   logic         start_i;
   logic         cpol_i;
   logic         cpha_i;
-  logic [7:0]   dout_o;
+  logic [WordLength-1:0]   dout_o;
   logic         spi_done_tick_o;
   logic         ready_o;
   logic         sclk_o;

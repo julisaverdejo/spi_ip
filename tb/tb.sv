@@ -6,13 +6,17 @@ module tb;
   always #(ClkPeriod / 2) clk_i = ~clk_i;
   
   // interface
-  spi_if vif (clk_i);
+  spi_if #(
+    .WordLength(8)
+  ) vif (clk_i);
   
   // test
   test top_test (vif);
   
   // instantiation
-  spi dut (
+  spi #(
+    .WordLength(8)
+  ) dut (
     .clk_i(vif.clk_i),
     .rst_i(vif.rst_i),
     .din_i(vif.din_i),

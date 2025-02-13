@@ -1,12 +1,14 @@
-module spi(
+module spi #(
+  parameter int WordLength = 8
+)(
   input logic         clk_i,
   input logic         rst_i,
-  input logic  [7:0]  din_i,
+  input logic  [WordLength-1:0]  din_i,
   input logic  [15:0] dvsr_i,
   input logic         start_i,
   input logic         cpol_i,
   input logic         cpha_i,
-  output logic [7:0]  dout_o,
+  output logic [WordLength-1:0]  dout_o,
   output logic        spi_done_tick_o,
   output logic        ready_o,
   output logic        sclk_o,
@@ -24,8 +26,8 @@ module spi(
   logic spi_clk_reg, ready_i, spi_done_tick_i;
   logic spi_clk_next;
   logic [2:0] n_reg, n_next;
-  logic [7:0] si_reg, si_next;
-  logic [7:0] so_reg, so_next;
+  logic [WordLength-1:0] si_reg, si_next;
+  logic [WordLength-1:0] so_reg, so_next;
   
   always_ff @(posedge clk_i, posedge rst_i)
     if(rst_i) begin
@@ -90,12 +92,12 @@ module spi(
 
         p1: begin
           if (c_reg == dvsr_i)
-            if (n_reg == 7) begin
+            if (n_reg == WordLength-1) begin
               spi_done_tick_i = 1;
               state_next = idle;
             end
             else begin
-              so_next = {so_reg[6:0], 1'b0};
+              so_next = {so_reg[WordLength-2:0], 1'b0};
               state_next = p0;
               n_next = n_reg + 1;
               c_next = 0;
