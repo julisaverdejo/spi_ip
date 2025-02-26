@@ -1,4 +1,4 @@
-module slave(
+module hdsoc_slave(
   input logic         clk_i,
   input logic         rst_i,
   input logic  [7:0]  din_i,

@@ -7,7 +7,7 @@ module tb;
   
   // interface
   spi_if #(
-    .WordLength(8)
+    .WordLength(24)
   ) vif (clk_i);
   
   // test
@@ -15,7 +15,7 @@ module tb;
   
   // instantiation
   spi #(
-    .WordLength(8)
+    .WordLength(24)
   ) dut (
     .clk_i(vif.clk_i),
     .rst_i(vif.rst_i),

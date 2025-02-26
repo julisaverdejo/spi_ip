@@ -1,5 +1,5 @@
 module spi #(
-  parameter int WordLength = 8
+  parameter int WordLength = 24
 )(
   input logic                   clk_i,
   input logic                   rst_i,
@@ -25,7 +25,7 @@ module spi #(
   logic [15:0] c_reg, c_next;
   logic spi_clk_reg, ready_i, spi_done_tick_i;
   logic spi_clk_next;
-  logic [2:0] n_reg, n_next;
+  logic [4:0] n_reg, n_next;
   logic [WordLength-1:0] si_reg, si_next;
   logic [WordLength-1:0] so_reg, so_next;
   
@@ -83,7 +83,7 @@ module spi #(
         p0: begin
             if (c_reg == dvsr_i) begin
               state_next = p1;
-              si_next = {si_reg[6:0], miso_i};
+              si_next = {si_reg[WordLength-2:0], miso_i};
               c_next = 0;
             end
             else
@@ -117,7 +117,7 @@ module spi #(
     
     //output
     assign dout_o = si_reg;
-    assign mosi_o = so_reg[7];
+    assign mosi_o = so_reg[WordLength-1];
     assign sclk_o = spi_clk_reg;
     
 endmodule

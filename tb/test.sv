@@ -36,7 +36,7 @@ module test (
         $finish;
       end
 
-      begin
+      begin 
         forever check();
       end
 
@@ -64,7 +64,7 @@ module test (
   
   task automatic write();
     @(vif.cb);
-    vif.cb.din_i <= $urandom_range(0,255);
+    vif.cb.din_i <= $urandom_range(0,16777215);
     vif.cb.start_i <= 'b1;
     @(vif.cb);
     vif.cb.start_i <= 'b0;
@@ -107,14 +107,15 @@ endtask : read
   
   
   task automatic spi_slave();
-  byte data = $urandom_range(0,255);
+  //byte data = $urandom_range(0,255);
+  int data = $urandom_range(0,16777215);
   
   //waits risign edge of start
   wait (vif.start_i != 1);
   @(vif.cb iff (vif.start_i == 1));
-  vif.miso_i = data[7];
+  vif.miso_i = data[23];
   
-  for (int i = 6; i > 0; i--) begin
+  for (int i = 22; i > 0; i--) begin
     wait (vif.cb.sclk_o != 1);
     @(vif.cb iff (vif.cb.sclk_o == 1)); 
     wait (vif.cb.sclk_o != 0);
@@ -131,20 +132,20 @@ endtask : read
 /* ################## CHECK ################## */
   task automatic check();
   int cnt_error = 0;
-  byte mosi_data = 0; //vif.mosi_o copy
-  byte miso_data = 0; //vif.miso_i copy
-  byte data_in = 0; //vif.din_i copy
-  byte data_out = 0; //vif.dout_o copy
+  int mosi_data = 0; //vif.mosi_o copy
+  int miso_data = 0; //vif.miso_i copy
+  int data_in = 0; //vif.din_i copy
+  int data_out = 0; //vif.dout_o copy
 
   wait (vif.start_i != 1);
   @(vif.cb iff (vif.start_i == 1));
   data_in = vif.din_i;
 
-  for (int i = 0; i < $size(data_in); i++) begin
+  for (int i = 0; i < 24; i++) begin
     wait (vif.cb.sclk_o != 1);
     @(vif.cb iff (vif.cb.sclk_o == 1));
-    mosi_data[7-i] = vif.mosi_o;
-    miso_data[7-i] = vif.miso_i;
+    mosi_data[23-i] = vif.mosi_o;
+    miso_data[23-i] = vif.miso_i;
     // if (data_in[7-i] != vif.mosi_o) begin
     //   cnt_error++;
     // end

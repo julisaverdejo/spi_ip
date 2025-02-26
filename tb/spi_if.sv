@@ -1,5 +1,5 @@
 interface spi_if #(
-  parameter int WordLength = 8
+  parameter int WordLength = 24
 ) (
   input logic clk_i
  ); 
